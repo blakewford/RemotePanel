@@ -52,7 +52,7 @@ static void* server(void*)
     int addrlen = sizeof(address);
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(PORT);
+    address.sin_port = htons(DISPLAY_PORT);
 
     bind(gServerSocket, (struct sockaddr *) &address, sizeof(address));
     listen(gServerSocket, 1);
@@ -120,9 +120,11 @@ void demo()
     }
     RemotePanel_WriteDisplayBuffer(buffer, size);
     RemotePanel_StartClient("127.0.0.1");
+    RemotePanel_AttachControls("127.0.0.1");
 
     usleep(1000*1000*5);
 
+    RemotePanel_DetachControls();
     RemotePanel_StopClient();
 }
 

@@ -1,25 +1,28 @@
 extern "C"
 {
-    #pragma pack(push, 1)
-    struct RemotePanel_DisplayParams
-    {
-        uint16_t width;
-        uint16_t height;
-        uint8_t type;
-        void* data;
-    };
-    #pragma pack(pop)
-
-    void RemotePanel_SetDisplayParams(RemotePanel_DisplayParams params);
-    void RemotePanel_SetMaxFramesPerSecond(uint8_t frames);
-    int32_t RemotePanel_GetBufferSize();
-    void RemotePanel_StartClient(const char* ip);
-    void RemotePanel_WriteDisplayBuffer(void* data, int32_t size);
-    void RemotePanel_StopClient();
-
     enum RemotePanel_Resolution: uint8_t
     {
         LOW_RES,
         HI_RES
     };
+
+    #pragma pack(push, 1)
+    struct RemotePanel_DisplayParams
+    {
+        uint16_t width = 0;
+        uint16_t height = 0;
+        uint8_t type = HI_RES;
+        void* data = nullptr;
+    };
+    #pragma pack(pop)
+
+    void RemotePanel_SetDisplayParams(RemotePanel_DisplayParams params);
+    RemotePanel_DisplayParams RemotePanel_GetDisplayParams();
+    void RemotePanel_SetMaxFramesPerSecond(uint8_t frames);
+    int32_t RemotePanel_GetBufferSize();
+    void RemotePanel_StartClient(const char* ip);
+    void RemotePanel_AttachControls(const char* ip);
+    void RemotePanel_WriteDisplayBuffer(void* data, int32_t size);
+    void RemotePanel_DetachControls();
+    void RemotePanel_StopClient();
 }
