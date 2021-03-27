@@ -62,6 +62,8 @@ static void* server(void*)
     {
         RemotePanel_DisplayParams params;
         bool success = read(sock, &params, sizeof(RemotePanel_DisplayParams)) == sizeof(RemotePanel_DisplayParams);
+        RemotePanel_SetDisplayParams(params);
+        RemotePanel_AttachControls("127.0.0.1");
 
         int32_t size = 0;
         switch(params.type)
@@ -87,7 +89,11 @@ static void* server(void*)
                 dumpToFile(params.data, params.width, params.height, size);
                 gFrames++;
             }
+
+            gKeepGoing = success;
         }
+
+        RemotePanel_DetachControls();
         free(params.data);
         close(sock);
     }
@@ -139,13 +145,12 @@ int main(int argc, char** argv)
     }
     else
     {
-        while(true)
+        while(gKeepGoing)
         {
             usleep(1);
         }
     }
 
-    gKeepGoing = false;
     shutdown(gServerSocket, SHUT_RD); // Break accept
     pthread_join(gServerThread, nullptr);
     close(gServerSocket);
