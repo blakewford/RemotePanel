@@ -60,17 +60,18 @@ static void* server(void*)
     int addrlen = sizeof(address);
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(DISPLAY_PORT);
+    address.sin_port = htons(CONTROL_PORT);
 
     bind(gServerSocket, (struct sockaddr *) &address, sizeof(address));
     listen(gServerSocket, 1);
 
+    RemotePanel_ButtonState state;
     while(gKeepGoing)
     {
         int sock = accept(gServerSocket, (struct sockaddr *)&address, (socklen_t *)&addrlen);
         if (sock != -1)
         {
-            bool success = read(sock, nullptr, 1) == 1;
+            bool success = read(sock, &state, sizeof(RemotePanel_ButtonState)) == sizeof(RemotePanel_ButtonState);
             if(success && gKeepGoing)
             {
             }

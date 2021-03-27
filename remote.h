@@ -16,6 +16,28 @@ extern "C"
     };
     #pragma pack(pop)
 
+    #pragma pack(push, 1)
+    struct RemotePanel_ButtonState
+    {
+        bool upButton = false;
+        bool leftButton = false;
+        bool downButton = false;
+        bool rightButton = false;
+        bool buttonA = false;
+        bool buttonB = false;
+
+        void clear()
+        {
+            upButton = false;
+            leftButton = false;
+            downButton = false;
+            rightButton = false;
+            buttonA = false;
+            buttonB = false;
+        }
+    };
+    #pragma pack(pop)
+
     void RemotePanel_SetDisplayParams(RemotePanel_DisplayParams params);
     RemotePanel_DisplayParams RemotePanel_GetDisplayParams();
     void RemotePanel_SetMaxFramesPerSecond(uint8_t frames);

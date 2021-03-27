@@ -1,30 +1,13 @@
 #include <stdint.h>
+#include <unistd.h>
 #include <pthread.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
 
 #include "remote.h"
 #include "private.h"
 
-struct buttonState
-{
-    bool upButton = false;
-    bool leftButton = false;
-    bool downButton = false;
-    bool rightButton = false;
-    bool buttonA = false;
-    bool buttonB = false;
-
-    void clear()
-    {
-        upButton = false;
-        leftButton = false;
-        downButton = false;
-        rightButton = false;
-        buttonA = false;
-        buttonB = false;
-    }
-};
-
-static buttonState gButtonState;
+static RemotePanel_ButtonState gButtonState;
 
 //#define REMOTE
 
@@ -45,9 +28,15 @@ static void SDL_Destroy()
     SDL_Quit();
 }
 
+static volatile int gClientSocket = -1;
 static volatile bool gKeepGoing = false;
-static void* EventThread(void* buffer)
+static void* EventThread(void*)
 {
+    struct sockaddr_in address;
+    address.sin_family = AF_INET;
+    address.sin_port = htons(CONTROL_PORT);
+    inet_pton(AF_INET, "127.0.0.1", &address.sin_addr);
+
     gKeepGoing = true;
     while(gKeepGoing)
     {
@@ -82,6 +71,12 @@ static void* EventThread(void* buffer)
                         gButtonState.buttonB = true;
                         break;
                 }
+
+                gClientSocket = socket(AF_INET, SOCK_STREAM, 0);
+                connect(gClientSocket, (struct sockaddr *)&address, sizeof(address));
+                send(gClientSocket, &gButtonState, sizeof(RemotePanel_ButtonState), 0);
+                close(gClientSocket);
+                gClientSocket = -1;
             }
         }
     }
@@ -95,6 +90,7 @@ void RemotePanel_AttachControls(const char* ip)
     if(params.data == nullptr) return;
 
     SDL_Init(params);
+
     pthread_t thread;
     pthread_create(&thread, nullptr, EventThread, nullptr);
 #endif
