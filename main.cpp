@@ -126,11 +126,9 @@ void demo()
     }
     RemotePanel_WriteDisplayBuffer(buffer, size);
     RemotePanel_StartClient("127.0.0.1");
-    RemotePanel_AttachControls("127.0.0.1");
 
     usleep(1000*1000*5);
 
-    RemotePanel_DetachControls();
     RemotePanel_StopClient();
 }
 
