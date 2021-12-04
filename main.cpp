@@ -8,10 +8,10 @@
 #include "remote.h"
 #include "private.h"
 
-static pthread_t gServerThread;
+static pthread_t gClientThread;
 static volatile uint64_t gFrames = 0;
 static volatile int gServerSocket = -1;
-static volatile bool gKeepGoing = false;
+static volatile bool gKeepGoing = true;
 static void dumpToFile(void* data, int32_t width, int32_t height, int32_t size)
 {
     uint8_t header[54];
@@ -46,7 +46,7 @@ static void dumpToFile(void* data, int32_t width, int32_t height, int32_t size)
     fclose(test);
 }
 
-static void* server(void*) 
+static void server()
 {
     struct sockaddr_in address;
     int addrlen = sizeof(address);
@@ -86,9 +86,9 @@ static void* server(void*)
             if(success && gKeepGoing)
             {
                 dumpToFile(params.data, params.width, params.height, size);
+                RemotePanel_PollControls();
                 gFrames++;
             }
-
             gKeepGoing = success;
         }
 
@@ -96,12 +96,10 @@ static void* server(void*)
         free(params.data);
         close(sock);
     }
-
-    return nullptr;
 }
 
 #include <cstring>
-void demo()
+void* demo(void*)
 {
     RemotePanel_DisplayParams params;
     params.width = 128;
@@ -129,27 +127,22 @@ void demo()
     usleep(1000*1000*5);
 
     RemotePanel_StopClient();
+
+    return nullptr;
 }
 
 int main(int argc, char** argv)
 {
     gServerSocket = socket(AF_INET, SOCK_STREAM, 0);
-    gKeepGoing = pthread_create(&gServerThread, nullptr, server, nullptr) == 0;
-
     if(argc > 1 && !strcmp("demo", argv[1]))
     {
-        demo();
-    }
-    else
-    {
-        while(gKeepGoing)
-        {
-            usleep(1);
-        }
+        gKeepGoing = pthread_create(&gClientThread, nullptr, demo, nullptr) == 0;
     }
 
+    server();
+
     shutdown(gServerSocket, SHUT_RD); // Break accept
-    pthread_join(gServerThread, nullptr);
+    pthread_join(gClientThread, nullptr);
     close(gServerSocket);
 
     return 0;

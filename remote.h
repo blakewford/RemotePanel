@@ -44,6 +44,7 @@ extern "C"
     void RemotePanel_StartClient(const char* ip);
     void RemotePanel_AttachControls(const char* ip, const RemotePanel_DisplayParams& params);
     void RemotePanel_WriteDisplayBuffer(void* data, int32_t size);
+    void RemotePanel_PollControls();
     void RemotePanel_DetachControls();
     void RemotePanel_StopClient();
 }

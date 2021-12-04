@@ -9,9 +9,6 @@
 
 static RemotePanel_ButtonState gButtonState;
 
-//#define REMOTE
-
-#ifndef REMOTE
 #include <SDL.h>
 static SDL_Window* w;
 static int32_t SDL_Init(const RemotePanel_DisplayParams& params)
@@ -28,79 +25,86 @@ static void SDL_Destroy()
     SDL_Quit();
 }
 
+void RemotePanel_AttachControls(const char* ip, const RemotePanel_DisplayParams& params)
+{
+    if(params.data == nullptr) return;
+    SDL_Init(params);
+}
+
 static volatile int gClientSocket = -1;
 static volatile bool gKeepGoing = false;
-static void* EventThread(void*)
+void RemotePanel_PollControls()
 {
     struct sockaddr_in address;
     address.sin_family = AF_INET;
     address.sin_port = htons(CONTROL_PORT);
     inet_pton(AF_INET, "127.0.0.1", &address.sin_addr);
 
-    gKeepGoing = true;
-    while(gKeepGoing)
+    SDL_Event e;
+    SDL_WaitEventTimeout(&e, 8);
+    if(e.type == SDL_QUIT)
     {
-        SDL_Event e;
-        while(SDL_PollEvent(&e) != 0)
+        SDL_Destroy();
+        return;
+    }
+    else if(e.type == SDL_KEYDOWN)
+    {
+        switch(e.key.keysym.sym)
         {
-            if(e.type == SDL_QUIT)
-            {
-                SDL_Destroy();
-                return nullptr;
-            }
-            else if(e.type == SDL_KEYDOWN)
-            {
-                switch(e.key.keysym.sym)
-                {
-                    case SDLK_UP:
-                        gButtonState.upButton = true;
-                        break;
-                    case SDLK_LEFT:
-                        gButtonState.leftButton = true;
-                        break;
-                    case SDLK_DOWN:
-                        gButtonState.downButton = true;
-                        break;
-                    case SDLK_RIGHT:
-                        gButtonState.rightButton = true;
-                        break;
-                    case SDLK_a:
-                        gButtonState.buttonA = true;
-                        break;
-                    case SDLK_b:
-                        gButtonState.buttonB = true;
-                        break;
-                }
-
-                gClientSocket = socket(AF_INET, SOCK_STREAM, 0);
-                connect(gClientSocket, (struct sockaddr *)&address, sizeof(address));
-                send(gClientSocket, &gButtonState, sizeof(RemotePanel_ButtonState), 0);
-                close(gClientSocket);
-                gClientSocket = -1;
-            }
+            case SDLK_UP:
+                gButtonState.upButton = true;
+                break;
+            case SDLK_LEFT:
+                gButtonState.leftButton = true;
+                break;
+            case SDLK_DOWN:
+                gButtonState.downButton = true;
+                break;
+            case SDLK_RIGHT:
+                gButtonState.rightButton = true;
+                break;
+            case SDLK_a:
+                gButtonState.buttonA = true;
+                break;
+            case SDLK_b:
+                gButtonState.buttonB = true;
+                break;
+        }
+    }
+    else if(e.type == SDL_KEYUP)
+    {
+        switch(e.key.keysym.sym)
+        {
+            case SDLK_UP:
+                gButtonState.upButton = false;
+                break;
+            case SDLK_LEFT:
+                gButtonState.leftButton = false;
+                break;
+            case SDLK_DOWN:
+                gButtonState.downButton = false;
+                break;
+            case SDLK_RIGHT:
+                gButtonState.rightButton = false;
+                break;
+            case SDLK_a:
+                gButtonState.buttonA = false;
+                break;
+            case SDLK_b:
+                gButtonState.buttonB = false;
+                break;
         }
     }
 
-    return nullptr;
-}
-#endif
-
-void RemotePanel_AttachControls(const char* ip, const RemotePanel_DisplayParams& params)
-{
-#ifndef REMOTE
-    if(params.data == nullptr) return;
-
-    SDL_Init(params);
-
-    pthread_t thread;
-    pthread_create(&thread, nullptr, EventThread, nullptr);
-#endif
+    gClientSocket = socket(AF_INET, SOCK_STREAM, 0);
+    connect(gClientSocket, (struct sockaddr *)&address, sizeof(address));
+    send(gClientSocket, &gButtonState, sizeof(RemotePanel_ButtonState), 0);
+    close(gClientSocket);
+    gClientSocket = -1;
 }
 
 void RemotePanel_DetachControls()
 {
-#ifndef REMOTE
     gKeepGoing = false;
     SDL_Destroy();
-#endif
 }

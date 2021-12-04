@@ -12,7 +12,7 @@ remote: main.cpp libhost.a libremote.a
 	$(CC) -L. $(FLAGS) main.cpp -o $@ -pthread -lremote -lhost $(LIBS)
 
 libhost.a: server.cpp
-	$(CC) -I$(INCLUDE) $(FLAGS) client.cpp server.cpp -c
+	$(CC) -I$(INCLUDE) $(FLAGS) server.cpp -c
 	ar rvs $@ server.o
 
 libremote.a: client.cpp

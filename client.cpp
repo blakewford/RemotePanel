@@ -128,10 +128,11 @@ void RemotePanel_SetMaxFramesPerSecond(uint8_t frames)
 
 void RemotePanel_StopClient()
 {
-    close(gClientSocket);
-    pthread_join(gClientThread, nullptr);
     gKeepGoing = false;
     shutdown(gServerSocket, SHUT_RD); // Break accept
     pthread_join(gServerThread, nullptr);
     close(gServerSocket);
+
+    close(gClientSocket);
+    pthread_join(gClientThread, nullptr);
 }
