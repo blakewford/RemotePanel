@@ -38,7 +38,7 @@ static void* client(void* ip)
             system_clock::time_point sync = system_clock::now() + microseconds(wait);
             while(keepGoing && count < (size/PACKET_SIZE))
             {
-                keepGoing = send(gClientSocket, gParams.data + (count*PACKET_SIZE), PACKET_SIZE, 0) == PACKET_SIZE;
+                keepGoing = send(gClientSocket, ((uint8_t*)gParams.data) + (count*PACKET_SIZE), PACKET_SIZE, 0) == PACKET_SIZE;
                 count++;
             }
             while(system_clock::now() < sync)
@@ -50,6 +50,8 @@ static void* client(void* ip)
     }
 
     close(gClientSocket);
+
+    return nullptr;
 }
 
 static volatile int gServerSocket = -1;
@@ -86,7 +88,7 @@ static pthread_t gClientThread;
 static pthread_t gServerThread;
 void RemotePanel_StartClient(const char* ip)
 {
-    pthread_create(&gClientThread, nullptr, client, (void*)ip) == 0;
+    pthread_create(&gClientThread, nullptr, client, (void*)ip);
     gServerSocket = socket(AF_INET, SOCK_STREAM, 0);
     gKeepGoing = pthread_create(&gServerThread, nullptr, server, nullptr) == 0;
 }
@@ -97,11 +99,6 @@ void RemotePanel_SetDisplayParams(RemotePanel_DisplayParams params)
     gParams.height = params.height;
     gParams.type = params.type;
     gParams.data = malloc(RemotePanel_GetBufferSize());
-}
-
-RemotePanel_DisplayParams RemotePanel_GetDisplayParams()
-{
-    return gParams;
 }
 
 int32_t RemotePanel_GetBufferSize()

@@ -14,7 +14,7 @@ static RemotePanel_ButtonState gButtonState;
 #ifndef REMOTE
 #include <SDL.h>
 static SDL_Window* w;
-static int32_t SDL_Init(RemotePanel_DisplayParams params)
+static int32_t SDL_Init(const RemotePanel_DisplayParams& params)
 {
     if(SDL_Init(SDL_INIT_VIDEO) < 0) return -1;
     w = SDL_CreateWindow("RemotePanel", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, params.width, params.height, SDL_WINDOW_SHOWN);
@@ -80,13 +80,14 @@ static void* EventThread(void*)
             }
         }
     }
+
+    return nullptr;
 }
 #endif
 
-void RemotePanel_AttachControls(const char* ip)
+void RemotePanel_AttachControls(const char* ip, const RemotePanel_DisplayParams& params)
 {
 #ifndef REMOTE
-    RemotePanel_DisplayParams params = RemotePanel_GetDisplayParams();
     if(params.data == nullptr) return;
 
     SDL_Init(params);

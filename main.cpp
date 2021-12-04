@@ -39,7 +39,7 @@ static void dumpToFile(void* data, int32_t width, int32_t height, int32_t size)
     fwrite(header, 54, 1, test);
     while(size)
     {
-        fwrite(data + cursor, 3, 1, test);
+        fwrite(((uint8_t*)data) + cursor, 3, 1, test);
         size-=4;
         cursor+=4;
     }
@@ -62,8 +62,7 @@ static void* server(void*)
     {
         RemotePanel_DisplayParams params;
         bool success = read(sock, &params, sizeof(RemotePanel_DisplayParams)) == sizeof(RemotePanel_DisplayParams);
-        RemotePanel_SetDisplayParams(params);
-        RemotePanel_AttachControls("127.0.0.1");
+        RemotePanel_AttachControls("127.0.0.1", params);
 
         int32_t size = 0;
         switch(params.type)
@@ -81,7 +80,7 @@ static void* server(void*)
             int32_t count = 0;
             while(success && count < (size/PACKET_SIZE))
             {
-                success = read(sock, params.data + (count*PACKET_SIZE), PACKET_SIZE) == PACKET_SIZE;
+                success = read(sock, ((uint8_t*)params.data) + (count*PACKET_SIZE), PACKET_SIZE) == PACKET_SIZE;
                 count++;
             }
             if(success && gKeepGoing)

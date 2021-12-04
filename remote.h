@@ -39,11 +39,10 @@ extern "C"
     #pragma pack(pop)
 
     void RemotePanel_SetDisplayParams(RemotePanel_DisplayParams params);
-    RemotePanel_DisplayParams RemotePanel_GetDisplayParams();
     void RemotePanel_SetMaxFramesPerSecond(uint8_t frames);
     int32_t RemotePanel_GetBufferSize();
     void RemotePanel_StartClient(const char* ip);
-    void RemotePanel_AttachControls(const char* ip);
+    void RemotePanel_AttachControls(const char* ip, const RemotePanel_DisplayParams& params);
     void RemotePanel_WriteDisplayBuffer(void* data, int32_t size);
     void RemotePanel_DetachControls();
     void RemotePanel_StopClient();
