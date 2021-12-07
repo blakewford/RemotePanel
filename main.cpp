@@ -61,7 +61,7 @@ static void server()
     if (sock != -1) 
     {
         RemotePanel_DisplayParams params;
-        bool success = read(sock, &params, sizeof(RemotePanel_DisplayParams)) == sizeof(RemotePanel_DisplayParams);
+        bool success = recv(sock, &params, sizeof(RemotePanel_DisplayParams), MSG_WAITALL) == sizeof(RemotePanel_DisplayParams);
         RemotePanel_AttachControls("127.0.0.1", params);
 
         int32_t size = 0;
@@ -74,14 +74,16 @@ static void server()
                 size = sizeof(uint32_t)*params.width*params.height;
                 break;
         }
+
         params.data = malloc(size);
         while(gKeepGoing) 
         {
-            int32_t count = 0;
-            while(success && count < (size/PACKET_SIZE))
+            int32_t total = 0;
+            while(success && (total < size))
             {
-                success = read(sock, ((uint8_t*)params.data) + (count*PACKET_SIZE), PACKET_SIZE) == PACKET_SIZE;
-                count++;
+                int count = recv(sock, ((uint8_t*)params.data) + total, size-total, 0);
+                success = count > 0;
+                total+=count;
             }
             if(success && gKeepGoing)
             {
