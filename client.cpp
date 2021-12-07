@@ -34,7 +34,7 @@ static void* client(void* ip)
         while(keepGoing) 
         {
             int32_t count = 0;
-            int32_t wait = floor((1000*1000*1)/gFPS);
+            int32_t wait = RemotePanel_GetFrameDelay();
             system_clock::time_point sync = system_clock::now() + microseconds(wait);
             while(keepGoing && count < (size/PACKET_SIZE))
             {
@@ -98,7 +98,9 @@ void RemotePanel_SetDisplayParams(RemotePanel_DisplayParams params)
     gParams.width = params.width;
     gParams.height = params.height;
     gParams.type = params.type;
+#ifndef __AVR__
     gParams.data = malloc(RemotePanel_GetBufferSize());
+#endif
 }
 
 int32_t RemotePanel_GetBufferSize()
@@ -124,6 +126,11 @@ void RemotePanel_WriteDisplayBuffer(void* data, int32_t size)
 void RemotePanel_SetMaxFramesPerSecond(uint8_t frames)
 {
     gFPS = frames;
+}
+
+int32_t RemotePanel_GetFrameDelay()
+{
+    return floor((1000*1000*1)/gFPS);
 }
 
 void RemotePanel_StopClient()

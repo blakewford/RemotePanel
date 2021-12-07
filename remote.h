@@ -40,6 +40,7 @@ extern "C"
 
     void RemotePanel_SetDisplayParams(RemotePanel_DisplayParams params);
     void RemotePanel_SetMaxFramesPerSecond(uint8_t frames);
+    int32_t RemotePanel_GetFrameDelay();
     int32_t RemotePanel_GetBufferSize();
     void RemotePanel_StartClient(const char* ip);
     void RemotePanel_AttachControls(const char* ip, const RemotePanel_DisplayParams& params);
