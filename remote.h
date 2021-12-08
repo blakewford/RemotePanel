@@ -1,3 +1,5 @@
+#include "stdint.h"
+
 extern "C"
 {
     enum RemotePanel_Resolution: uint8_t

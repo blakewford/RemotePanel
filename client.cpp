@@ -14,9 +14,8 @@ using namespace std::chrono;
 #include "remote.h"
 #include "private.h"
 
-static volatile uint8_t gFPS = 60;
 static volatile int gClientSocket = -1;
-static RemotePanel_DisplayParams gParams;
+extern RemotePanel_DisplayParams gParams;
 
 static void* client(void* ip) 
 {
@@ -93,44 +92,9 @@ void RemotePanel_StartClient(const char* ip)
     gKeepGoing = pthread_create(&gServerThread, nullptr, server, nullptr) == 0;
 }
 
-void RemotePanel_SetDisplayParams(RemotePanel_DisplayParams params)
-{
-    gParams.width = params.width;
-    gParams.height = params.height;
-    gParams.type = params.type;
-#ifndef __AVR__
-    gParams.data = malloc(RemotePanel_GetBufferSize());
-#endif
-}
-
-int32_t RemotePanel_GetBufferSize()
-{
-    int32_t size = 0;
-    switch(gParams.type)
-    {
-        case LOW_RES:
-            size = sizeof(uint16_t)*gParams.width*gParams.height;
-            break;
-        case HI_RES:
-            size = sizeof(uint32_t)*gParams.width*gParams.height;
-            break;
-    }
-    return size;
-}
-
 void RemotePanel_WriteDisplayBuffer(void* data, int32_t size)
 {
     memcpy(gParams.data, data, size);
-}
-
-void RemotePanel_SetMaxFramesPerSecond(uint8_t frames)
-{
-    gFPS = frames;
-}
-
-int32_t RemotePanel_GetFrameDelay()
-{
-    return floor((1000*1000*1)/gFPS);
 }
 
 void RemotePanel_StopClient()

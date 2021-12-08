@@ -15,9 +15,9 @@ libhost.a: server.cpp
 	$(CC) -I$(INCLUDE) $(FLAGS) server.cpp -c
 	ar rvs $@ server.o
 
-libremote.a: client.cpp
-	$(CC) $(FLAGS) client.cpp -c
-	ar rvs $@ client.o
+libremote.a: client.cpp nostdlib.cpp
+	$(CC) $(FLAGS) client.cpp nostdlib.cpp -c
+	ar rvs $@ client.o nostdlib.o
 
 clean:
 	-@rm remote
