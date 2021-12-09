@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <unistd.h>
 #include <pthread.h>
 #include <arpa/inet.h>
@@ -12,7 +13,7 @@ static pthread_t gClientThread;
 static volatile uint64_t gFrames = 0;
 static volatile int gServerSocket = -1;
 static volatile bool gKeepGoing = true;
-static void dumpToFile(void* data, int32_t width, int32_t height, int32_t size)
+static void dumpToFile(void* data, int32_t width, int32_t height, int32_t size, uint8_t resolution)
 {
     uint8_t header[54];
     header[0] = 'B';
@@ -37,12 +38,31 @@ static void dumpToFile(void* data, int32_t width, int32_t height, int32_t size)
     int32_t cursor = 0;
     FILE* test = fopen("test.bmp", "w");
     fwrite(header, 54, 1, test);
-    while(size)
+    if(resolution == HI_RES)
     {
-        fwrite(((uint8_t*)data) + cursor, 3, 1, test);
-        size-=4;
-        cursor+=4;
+        while(size)
+        {
+            fwrite(((uint8_t*)data) + cursor, 3, 1, test);
+            size-=4;
+            cursor+=4;
+        }
     }
+    else
+    {
+        while(size)
+        {
+            uint16_t compressed = *((uint16_t*)(((uint8_t*)data) + cursor));
+            uint8_t r = ((compressed & 0xF800) >> 11) * 8;
+            uint8_t g = ((compressed & 0x07E0) >> 5) * 4;
+            uint8_t b = (compressed & 0x001F) * 8;
+            fwrite(&b, 1, 1, test);
+            fwrite(&g, 1, 1, test);
+            fwrite(&r, 1, 1, test);
+            size-=2;
+            cursor+=2;
+        }
+    }
+
     fclose(test);
 }
 
@@ -76,7 +96,7 @@ static void server()
         }
 
         params.data = malloc(size);
-        while(gKeepGoing) 
+        while(gKeepGoing)
         {
             int32_t total = 0;
             while(success && (total < size))
@@ -87,7 +107,7 @@ static void server()
             }
             if(success && gKeepGoing)
             {
-                dumpToFile(params.data, params.width, params.height, size);
+                dumpToFile(params.data, params.width, params.height, size, params.type);
                 RemotePanel_PollControls();
                 gFrames++;
             }
@@ -100,19 +120,21 @@ static void server()
     }
 }
 
-#include <cstring>
-void* demo(void*)
+int32_t demoSetup(uint8_t type)
 {
     RemotePanel_DisplayParams params;
     params.width = 128;
     params.height = 64;
-    params.type = HI_RES;
+    params.type = type;
+
     RemotePanel_SetDisplayParams(params);
     RemotePanel_SetMaxFramesPerSecond(1);
 
-    const int32_t size = RemotePanel_GetBufferSize();
+    return RemotePanel_GetBufferSize();;
+}
 
-    char buffer[size];
+void buildHighResolutionBuffer(uint8_t* buffer, int32_t size)
+{
     int32_t cursor = 0;
     int32_t toWrite = size;
     while(toWrite)
@@ -123,6 +145,37 @@ void* demo(void*)
         toWrite-=4;
         cursor+=4;
     }
+}
+
+void buildLowResolutionBuffer(uint8_t* buffer, int32_t size)
+{
+    int32_t cursor = 0;
+    int32_t toWrite = size;
+    while(toWrite)
+    {
+        memset(buffer + cursor, 0x00, 1);
+        memset(buffer + cursor + 1, 0xF8, 1);
+        toWrite-=2;
+        cursor+=2;
+    }
+}
+
+void* demo(void* p)
+{
+    uint8_t type = *((uint8_t*)p);
+    const int32_t size = demoSetup(type);
+    uint8_t buffer[size];
+
+    switch(type)
+    {
+        case HI_RES:
+            buildHighResolutionBuffer(buffer, size);
+            break;
+        case LOW_RES:
+            buildLowResolutionBuffer(buffer, size);
+            break;
+    }
+
     RemotePanel_WriteDisplayBuffer(buffer, size);
     RemotePanel_StartClient("127.0.0.1");
 
@@ -135,10 +188,11 @@ void* demo(void*)
 
 int main(int argc, char** argv)
 {
+    uint8_t type = LOW_RES;
     gServerSocket = socket(AF_INET, SOCK_STREAM, 0);
     if(argc > 1 && !strcmp("demo", argv[1]))
     {
-        gKeepGoing = pthread_create(&gClientThread, nullptr, demo, nullptr) == 0;
+        gKeepGoing = pthread_create(&gClientThread, nullptr, demo, &type) == 0;
     }
 
     server();
