@@ -30,6 +30,9 @@ extern "C"
             case HI_RES:
                 size = sizeof(uint32_t)*gParams.width*gParams.height;
                 break;
+             case BINARY:
+                size = (gParams.width*gParams.height)/8;
+                break;
         }
         return size;
     }    

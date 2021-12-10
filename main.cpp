@@ -47,7 +47,7 @@ static void dumpToFile(void* data, int32_t width, int32_t height, int32_t size, 
             cursor+=4;
         }
     }
-    else
+    else if(resolution == LOW_RES)
     {
         while(size)
         {
@@ -60,6 +60,21 @@ static void dumpToFile(void* data, int32_t width, int32_t height, int32_t size, 
             fwrite(&r, 1, 1, test);
             size-=2;
             cursor+=2;
+        }
+    }
+    else if(resolution == BINARY)
+    {
+        while(size)
+        {
+            uint8_t j = 8;
+            uint8_t compressed = ((uint8_t*)data)[cursor];
+            while(j--)
+            {
+                uint32_t pixel = ((compressed >> j) & 0x1) == 0? 0: ~0;
+                fwrite(&pixel, 3, 1, test);
+            }
+            size--;
+            cursor++;
         }
     }
 
@@ -92,6 +107,9 @@ static void server()
                 break;
             case HI_RES:
                 size = sizeof(uint32_t)*params.width*params.height;
+                break;
+            case BINARY:
+                size = (params.width*params.height)/8;
                 break;
         }
 
@@ -160,6 +178,11 @@ void buildLowResolutionBuffer(uint8_t* buffer, int32_t size)
     }
 }
 
+void buildBinaryResolutionBuffer(uint8_t* buffer, int32_t size)
+{
+    memset(buffer, 0xFF, size);
+}
+
 void* demo(void* p)
 {
     uint8_t type = *((uint8_t*)p);
@@ -173,6 +196,9 @@ void* demo(void* p)
             break;
         case LOW_RES:
             buildLowResolutionBuffer(buffer, size);
+            break;
+        case BINARY:
+            buildBinaryResolutionBuffer(buffer, size);
             break;
     }
 

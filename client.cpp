@@ -32,13 +32,11 @@ static void* client(void* ip)
         bool keepGoing = send(gClientSocket, &gParams, sizeof(RemotePanel_DisplayParams), 0) == sizeof(RemotePanel_DisplayParams);
         while(keepGoing) 
         {
-            int32_t count = 0;
             int32_t wait = RemotePanel_GetFrameDelay();
             system_clock::time_point sync = system_clock::now() + microseconds(wait);
-            while(keepGoing && count < (size/PACKET_SIZE))
+            while(keepGoing)
             {
-                keepGoing = send(gClientSocket, ((uint8_t*)gParams.data) + (count*PACKET_SIZE), PACKET_SIZE, 0) == PACKET_SIZE;
-                count++;
+                keepGoing = send(gClientSocket, ((uint8_t*)gParams.data), size, MSG_WAITALL) == size;
             }
             while(system_clock::now() < sync)
             {

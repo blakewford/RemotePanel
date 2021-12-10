@@ -5,7 +5,8 @@ extern "C"
     enum RemotePanel_Resolution: uint8_t
     {
         LOW_RES,
-        HI_RES
+        HI_RES,
+        BINARY
     };
 
     #pragma pack(push, 1)
