@@ -33,7 +33,7 @@ static void* client(void* ip)
         while(keepGoing) 
         {
             int32_t wait = RemotePanel_GetFrameDelay();
-            system_clock::time_point sync = system_clock::now() + microseconds(wait);
+            system_clock::time_point sync = system_clock::now() + milliseconds(wait);
             while(keepGoing)
             {
                 keepGoing = send(gClientSocket, ((uint8_t*)gParams.data), size, MSG_WAITALL) == size;

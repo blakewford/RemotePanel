@@ -44,6 +44,6 @@ extern "C"
 
     int32_t RemotePanel_GetFrameDelay()
     {
-        return floor((1000*1000*1)/gFPS);
+        return floor(1000/gFPS);
     }    
 }
