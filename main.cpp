@@ -19,7 +19,7 @@ static void dumpToFile(void* data, int32_t width, int32_t height, int32_t size, 
     header[0] = 'B';
     header[1] = 'M';
 
-    int32_t imageSize = (size*3)/4;
+    int32_t imageSize = width*height*3;
     *(uint32_t*)(&header[2]) = (uint32_t)(imageSize + 54);
     *(uint32_t*)(&header[6]) = (uint32_t)0;
     *(uint32_t*)(&header[10]) = (uint32_t)54;
@@ -70,7 +70,7 @@ static void dumpToFile(void* data, int32_t width, int32_t height, int32_t size, 
             uint8_t compressed = ((uint8_t*)data)[cursor];
             while(j--)
             {
-                uint32_t pixel = ((compressed >> j) & 0x1) == 0? 0: ~0;
+                uint32_t pixel = ((compressed >> j) & 0x1) == 0 ? 0: ~0;
                 fwrite(&pixel, 3, 1, test);
             }
             size--;
@@ -96,7 +96,7 @@ static void server()
     if (sock != -1) 
     {
         RemotePanel_DisplayParams params;
-        bool success = recv(sock, &params, sizeof(RemotePanel_DisplayParams), MSG_WAITALL) == sizeof(RemotePanel_DisplayParams);
+        bool success = recv(sock, &params, 5, MSG_WAITALL) == 5;
         RemotePanel_AttachControls("127.0.0.1", params);
 
         int32_t size = 0;
